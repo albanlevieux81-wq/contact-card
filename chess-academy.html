@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chess Improvement Academy</title>
+<style>
+  :root{
+    --bg:#0d1117; --bg2:#0a0e14;
+    --panel:#161b22; --panel2:#1c232c; --panel3:#222c38;
+    --gold:#d4af37; --gold2:#f0d488; --goldDim:rgba(212,175,55,.16);
+    --text:#e9e7df; --muted:#8b96a5; --line:rgba(212,175,55,.18);
+    --good:#56b36a; --bad:#d2596b; --info:#5aa9e6;
+    --lsq:#f0d9b5; --dsq:#b58863;
+    --shadow:0 18px 50px rgba(0,0,0,.55);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(1200px 800px at 80% -10%,#1a2230 0%,var(--bg) 55%) fixed;
+    color:var(--text); min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  .serif{font-family:Georgia,"Times New Roman",serif}
+  #root{min-height:100vh}
+  a{color:var(--gold2)}
+  ::selection{background:var(--goldDim)}
+  /* layout */
+  .shell{display:flex;min-height:100vh}
+  .sidebar{
+    width:248px;flex:0 0 248px;background:linear-gradient(180deg,var(--panel) 0%,var(--bg2) 100%);
+    border-right:1px solid var(--line);padding:22px 16px;position:sticky;top:0;height:100vh;
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .brand{display:flex;align-items:center;gap:12px;padding:6px 8px 18px;border-bottom:1px solid var(--line);margin-bottom:12px}
+  .brand .crown{font-size:30px;color:var(--gold);text-shadow:0 2px 10px rgba(212,175,55,.5)}
+  .brand h1{font-size:16px;line-height:1.2;letter-spacing:.3px}
+  .brand small{color:var(--muted);font-size:11px;letter-spacing:1.5px;text-transform:uppercase}
+  .navbtn{
+    display:flex;align-items:center;gap:13px;padding:12px 13px;border-radius:11px;cursor:pointer;
+    color:var(--muted);font-size:14.5px;font-weight:600;border:1px solid transparent;transition:.18s;
+    background:transparent;text-align:left;width:100%;
+  }
+  .navbtn .ic{font-size:18px;width:22px;text-align:center}
+  .navbtn:hover{background:var(--panel2);color:var(--text)}
+  .navbtn.active{background:linear-gradient(90deg,var(--goldDim),transparent);color:var(--gold2);border-color:var(--line)}
+  .navbtn.active .ic{filter:drop-shadow(0 0 6px rgba(212,175,55,.6))}
+  .side-foot{margin-top:auto;font-size:11px;color:var(--muted);padding:10px 8px;border-top:1px solid var(--line)}
+  .main{flex:1;min-width:0;padding:30px 38px 70px;max-width:1180px;margin:0 auto;width:100%}
+  .topbar{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:24px}
+  .topbar h2{font-size:27px;letter-spacing:.3px}
+  .topbar p{color:var(--muted);font-size:13.5px;margin-top:4px;max-width:640px}
+  .fade{animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  /* cards */
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+  .grid{display:grid;gap:18px}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;border:1px solid var(--line);color:var(--gold2);background:var(--goldDim)}
+  .pill.gray{color:var(--muted);background:transparent}
+  .tag{font-size:11px;font-weight:700;color:var(--muted);background:var(--panel3);border:1px solid var(--line);padding:3px 9px;border-radius:7px}
+  .eco{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--gold2);letter-spacing:1px}
+  /* buttons */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel3);color:var(--text);font-weight:600;font-size:13.5px;cursor:pointer;transition:.16s}
+  .btn:hover{background:var(--panel2);transform:translateY(-1px)}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .btn.gold{background:linear-gradient(135deg,var(--gold),#b8932c);color:#1a1407;border-color:transparent;font-weight:800}
+  .btn.gold:hover{filter:brightness(1.08)}
+  .btn.ghost{background:transparent}
+  .btn.sm{padding:7px 12px;font-size:12.5px}
+  .input,select,textarea{width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit}
+  textarea{resize:vertical;line-height:1.5}
+  .input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .muted{color:var(--muted)}
+  .gold{color:var(--gold2)}
+  .sep{height:1px;background:var(--line);margin:16px 0}
+  /* board */
+  .board-wrap{display:inline-block;background:var(--panel3);padding:11px;border-radius:14px;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .board{display:grid;grid-template-columns:repeat(8,1fr);width:var(--bsz,420px);height:var(--bsz,420px);border-radius:6px;overflow:hidden}
+  .sq{position:relative;display:flex;align-items:center;justify-content:center;user-select:none}
+  .sq.l{background:var(--lsq)}
+  .sq.d{background:var(--dsq)}
+  .sq.sel::after{content:"";position:absolute;inset:0;background:rgba(212,175,55,.45);box-shadow:inset 0 0 0 3px var(--gold)}
+  .sq.last::before{content:"";position:absolute;inset:0;background:rgba(212,175,55,.28)}
+  .sq.good::after{content:"";position:absolute;inset:0;background:rgba(86,179,106,.5)}
+  .sq.bad::after{content:"";position:absolute;inset:0;background:rgba(210,89,107,.55)}
+  .sq.chk::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(210,89,107,.85),transparent 70%)}
+  .sq .pc{position:relative;z-index:2;font-size:calc(var(--bsz,420px)/12);line-height:1;cursor:pointer;transition:transform .08s}
+  .sq .pc.w{color:#fbfbf7;text-shadow:0 1px 1px #555,0 0 2px #000,1px 1px 0 #777}
+  .sq .pc.b{color:#1b1b1b;text-shadow:0 1px 1px #aaa,0 0 1px #000}
+  .sq .pc:active{transform:scale(1.12)}
+  .sq .dot{position:absolute;z-index:1;width:30%;height:30%;border-radius:50%;background:rgba(20,20,20,.32)}
+  .sq .ring{position:absolute;z-index:1;inset:8%;border-radius:50%;border:4px solid rgba(20,20,20,.3)}
+  .sq .co{position:absolute;font-size:10px;font-weight:800;z-index:3;pointer-events:none}
+  .sq .co.f{right:3px;bottom:1px}
+  .sq .co.r{left:3px;top:1px}
+  .sq.l .co{color:var(--dsq)} .sq.d .co{color:var(--lsq)}
+  .boardgut{display:grid;grid-template-columns:18px 1fr;gap:6px;align-items:center}
+  /* palette */
+  .palette{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+  .palette .p{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:26px;background:var(--bg2);border:1px solid var(--line);border-radius:9px;cursor:pointer}
+  .palette .p.sel{border-color:var(--gold);background:var(--goldDim)}
+  .palette .p.w{color:#fbfbf7;text-shadow:0 1px 1px #555,0 0 2px #000}
+  .palette .p.b{color:#cfcfcf}
+  /* lists */
+  .list{display:flex;flex-direction:column;gap:8px;max-height:560px;overflow:auto;padding-right:4px}
+  .item{padding:13px 14px;border:1px solid var(--line);border-radius:11px;cursor:pointer;background:var(--panel);transition:.15s}
+  .item:hover{background:var(--panel2)}
+  .item.active{border-color:var(--gold);background:linear-gradient(90deg,var(--goldDim),transparent)}
+  .item h4{font-size:14.5px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .item .sub{color:var(--muted);font-size:12px;margin-top:3px}
+  .kv{display:flex;gap:9px;margin:7px 0;font-size:13.5px;line-height:1.5}
+  .kv b{color:var(--gold2);flex:0 0 88px;font-weight:700}
+  .aibox{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px;font-size:14px;line-height:1.65;white-space:pre-wrap;max-height:480px;overflow:auto}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px;text-align:center}
+  .stat .n{font-size:30px;font-weight:800;color:var(--gold2)}
+  .stat .l{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+  .feedback{padding:12px 14px;border-radius:11px;font-size:13.5px;font-weight:600;line-height:1.5}
+  .feedback.ok{background:rgba(86,179,106,.14);border:1px solid rgba(86,179,106,.4);color:#8fe0a3}
+  .feedback.err{background:rgba(210,89,107,.14);border:1px solid rgba(210,89,107,.4);color:#f0a3ae}
+  .feedback.idle{background:var(--bg2);border:1px solid var(--line);color:var(--muted)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted)}
+  .chip.on{background:var(--goldDim);color:var(--gold2);border-color:var(--gold)}
+  .scroll::-webkit-scrollbar{width:8px} .scroll::-webkit-scrollbar-thumb{background:var(--panel3);border-radius:8px}
+  .quote{font-size:18px;line-height:1.55;font-style:italic}
+  .moves{display:flex;flex-wrap:wrap;gap:5px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+  .mv{padding:3px 8px;border-radius:6px;background:var(--bg2);border:1px solid transparent;cursor:pointer}
+  .mv.cur{border-color:var(--gold);color:var(--gold2);background:var(--goldDim)}
+  .mv.err{color:var(--bad)}
+  .two{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:start}
+  @media(max-width:920px){
+    .shell{flex-direction:column}
+    .sidebar{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap;overflow:auto}
+    .brand{width:100%}
+    .navbtn{width:auto} .side-foot{display:none}
+    .two{grid-template-columns:1fr}
+    .main{padding:22px 16px 60px}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
+const {useState,useMemo,useCallback,useEffect,useReducer,useRef} = React;
+
+/* ============================================================
+   LIGHTWEIGHT CHESS ENGINE
+   board: 64-array, index 0=a8 ... 63=h1. '' = empty.
+   White pieces uppercase PNBRQK, black lowercase.
+   ============================================================ */
+const FILES=['a','b','c','d','e','f','g','h'];
+const UNI={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
+const START_FEN="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+const fileOf=i=>i%8, rankOf=i=>Math.floor(i/8);
+const sqName=i=>FILES[fileOf(i)]+(8-rankOf(i));
+const nameToIdx=s=>(8-parseInt(s[1]))*8+FILES.indexOf(s[0]);
+const colorOf=p=>!p?null:(p===p.toUpperCase()?'w':'b');
+const onB=i=>i>=0&&i<64;
+const KN=[-17,-15,-10,-6,6,10,15,17], KG=[-9,-8,-7,-1,1,7,8,9];
+const BD=[-9,-7,7,9], RD=[-8,-1,1,8];
+const knightOk=(a,b)=>{const df=Math.abs(fileOf(a)-fileOf(b)),dr=Math.abs(rankOf(a)-rankOf(b));return (df===1&&dr===2)||(df===2&&dr===1);};
+const kingStep=(a,b)=>{const df=Math.abs(fileOf(a)-fileOf(b)),dr=Math.abs(rankOf(a)-rankOf(b));return df<=1&&dr<=1&&df+dr>0;};
+
+function parseFEN(fen){
+  const parts=fen.trim().split(/\s+/);
+  const board=new Array(64).fill('');
+  parts[0].split('/').forEach((row,r)=>{
+    let f=0;
+    for(const ch of row){ if(/\d/.test(ch)) f+=+ch; else { board[r*8+f]=ch; f++; } }
+  });
+  return {board, turn:parts[1]||'w', castling:parts[2]||'-', ep:(parts[3]&&parts[3]!=='-')?nameToIdx(parts[3]):null};
+}
+function toFEN(s){
+  const rows=[];
+  for(let r=0;r<8;r++){
+    let str='',e=0;
+    for(let f=0;f<8;f++){ const p=s.board[r*8+f]; if(!p)e++; else { if(e){str+=e;e=0;} str+=p; } }
+    if(e)str+=e; rows.push(str);
+  }
+  return rows.join('/')+' '+s.turn+' '+(s.castling||'-')+' '+(s.ep!=null?sqName(s.ep):'-')+' 0 1';
+}
+function attackedByPawn(b,t,by){
+  const set=by==='w'?[[7,'P'],[9,'P']]:[[-7,'p'],[-9,'p']];
+  for(const [d,pc] of set){ const p=t+d; if(onB(p)&&b[p]===pc&&Math.abs(fileOf(p)-fileOf(t))===1) return true; }
+  return false;
+}
+function attackedByKnight(b,t,by){
+  const N=by==='w'?'N':'n';
+  for(const o of KN){ const p=t+o; if(onB(p)&&b[p]===N&&knightOk(p,t)) return true; }
+  return false;
+}
+function attackedByKing(b,t,by){
+  const K=by==='w'?'K':'k';
+  for(const o of KG){ const p=t+o; if(onB(p)&&b[p]===K&&kingStep(p,t)) return true; }
+  return false;
+}
+function attackedBySlide(b,t,by){
+  const B=by==='w'?'B':'b',R=by==='w'?'R':'r',Q=by==='w'?'Q':'q';
+  for(const d of BD){ let p=t; while(true){ const n=p+d; if(!onB(n)||Math.abs(fileOf(n)-fileOf(p))!==1) break; p=n; const pc=b[p]; if(pc){ if(pc===B||pc===Q) return true; break; } } }
+  for(const d of RD){ let p=t; while(true){ const n=p+d; if(!onB(n)) break; if((d===1||d===-1)&&rankOf(n)!==rankOf(p)) break; p=n; const pc=b[p]; if(pc){ if(pc===R||pc===Q) return true; break; } } }
+  return false;
+}
+const isAttacked=(b,t,by)=>attackedByPawn(b,t,by)||attackedByKnight(b,t,by)||attackedByKing(b,t,by)||attackedBySlide(b,t,by);
+const kingIdx=(b,c)=>b.indexOf(c==='w'?'K':'k');
+const inCheck=(b,c)=>{const k=kingIdx(b,c);return k<0?false:isAttacked(b,k,c==='w'?'b':'w');};
+
+function genPseudo(s){
+  const {board:b,turn,castling,ep}=s, me=turn, opp=turn==='w'?'b':'w', mv=[];
+  const add=(from,to,x={})=>mv.push({from,to,...x});
+  for(let i=0;i<64;i++){
+    const p=b[i]; if(!p||colorOf(p)!==me) continue;
+    const t=p.toUpperCase();
+    if(t==='P'){
+      const dir=me==='w'?-8:8, start=me==='w'?6:1, promo=me==='w'?0:7, one=i+dir;
+      if(onB(one)&&!b[one]){
+        if(rankOf(one)===promo){ for(const pr of['Q','R','B','N']) add(i,one,{promo:pr}); } else add(i,one);
+        if(rankOf(i)===start){ const two=i+2*dir; if(!b[two]) add(i,two,{dbl:true}); }
+      }
+      for(const dc of(me==='w'?[-9,-7]:[7,9])){
+        const c=i+dc; if(!onB(c)||Math.abs(fileOf(c)-fileOf(i))!==1) continue;
+        if(b[c]&&colorOf(b[c])===opp){ if(rankOf(c)===promo){ for(const pr of['Q','R','B','N']) add(i,c,{promo:pr,cap:true}); } else add(i,c,{cap:true}); }
+        else if(ep!=null&&c===ep) add(i,c,{ep:true,cap:true});
+      }
+    } else if(t==='N'){
+      for(const o of KN){ const to=i+o; if(onB(to)&&knightOk(i,to)&&(!b[to]||colorOf(b[to])===opp)) add(i,to,{cap:!!b[to]}); }
+    } else if(t==='K'){
+      for(const o of KG){ const to=i+o; if(onB(to)&&kingStep(i,to)&&(!b[to]||colorOf(b[to])===opp)) add(i,to,{cap:!!b[to]}); }
+      if(me==='w'){
+        if(castling.includes('K')&&!b[61]&&!b[62]&&b[63]==='R'&&!isAttacked(b,60,opp)&&!isAttacked(b,61,opp)&&!isAttacked(b,62,opp)) add(60,62,{castle:'K'});
+        if(castling.includes('Q')&&!b[59]&&!b[58]&&!b[57]&&b[56]==='R'&&!isAttacked(b,60,opp)&&!isAttacked(b,59,opp)&&!isAttacked(b,58,opp)) add(60,58,{castle:'Q'});
+      } else {
+        if(castling.includes('k')&&!b[5]&&!b[6]&&b[7]==='r'&&!isAttacked(b,4,opp)&&!isAttacked(b,5,opp)&&!isAttacked(b,6,opp)) add(4,6,{castle:'k'});
+        if(castling.includes('q')&&!b[3]&&!b[2]&&!b[1]&&b[0]==='r'&&!isAttacked(b,4,opp)&&!isAttacked(b,3,opp)&&!isAttacked(b,2,opp)) add(4,2,{castle:'q'});
+      }
+    } else {
+      const dirs=t==='B'?BD:t==='R'?RD:[...BD,...RD];
+      for(const d of dirs){
+        let cur=i;
+        while(true){
+          const n=cur+d; if(!onB(n)) break;
+          if((d===-9||d===-7||d===7||d===9)&&Math.abs(fileOf(n)-fileOf(cur))!==1) break;
+          if((d===1||d===-1)&&rankOf(n)!==rankOf(cur)) break;
+          cur=n;
+          if(!b[cur]) add(i,cur);
+          else { if(colorOf(b[cur])===opp) add(i,cur,{cap:true}); break; }
+        }
+      }
+    }
+  }
+  return mv;
+}
+function applyMove(s,m){
+  const b=s.board.slice(), piece=b[m.from], me=s.turn, opp=me==='w'?'b':'w';
+  b[m.to]=m.promo?(me==='w'?m.promo:m.promo.toLowerCase()):piece;
+  b[m.from]='';
+  if(m.ep) b[me==='w'?m.to+8:m.to-8]='';
+  if(m.castle==='K'){b[61]=b[63];b[63]='';}
+  if(m.castle==='Q'){b[59]=b[56];b[56]='';}
+  if(m.castle==='k'){b[5]=b[7];b[7]='';}
+  if(m.castle==='q'){b[3]=b[0];b[0]='';}
+  let c=s.castling;
+  const rm=x=>{c=c.replace(x,'');};
+  if(piece==='K'){rm('K');rm('Q');} if(piece==='k'){rm('k');rm('q');}
+  if(m.from===63||m.to===63) rm('K');
+  if(m.from===56||m.to===56) rm('Q');
+  if(m.from===7||m.to===7) rm('k');
+  if(m.from===0||m.to===0) rm('q');
+  if(c==='') c='-';
+  let ep=null; if(m.dbl) ep=me==='w'?m.from-8:m.from+8;
+  return {board:b,turn:opp,castling:c,ep};
+}
+const legalMoves=s=>genPseudo(s).filter(m=>!inCheck(applyMove(s,m).board,s.turn));
+
+function parseSAN(s,raw){
+  let t=raw.replace(/[+#!?]/g,'').replace(/e\.p\.?/i,'').trim();
+  const legals=legalMoves(s);
+  if(/^(0-0-0|O-O-O)$/.test(t)) return legals.find(m=>m.castle==='Q'||m.castle==='q');
+  if(/^(0-0|O-O)$/.test(t)) return legals.find(m=>m.castle==='K'||m.castle==='k');
+  let promo=null; const pm=t.match(/=([QRBN])$/); if(pm){promo=pm[1];t=t.replace(/=([QRBN])$/,'');}
+  let piece='P'; if(/^[KQRBN]/.test(t)){piece=t[0];t=t.slice(1);}
+  t=t.replace(/x/g,'');
+  const dest=t.slice(-2), target=nameToIdx(dest), hint=t.slice(0,-2);
+  let hf=null,hr=null;
+  for(const ch of hint){ if(/[a-h]/.test(ch)) hf=FILES.indexOf(ch); else if(/[1-8]/.test(ch)) hr=8-(+ch); }
+  const cand=legals.filter(m=>{
+    const p=s.board[m.from]; if(!p||p.toUpperCase()!==piece) return false;
+    if(m.to!==target) return false;
+    if(promo){ if(m.promo!==promo) return false; } else if(m.promo&&m.promo!=='Q') return false;
+    if(hf!=null&&fileOf(m.from)!==hf) return false;
+    if(hr!=null&&rankOf(m.from)!==hr) return false;
+    return true;
+  });
+  return cand[0]||null;
+}
+function buildLine(sans){
+  let st=parseFEN(START_FEN); const out=[{state:st,san:null,move:null}];
+  for(const sa of sans){ const m=parseSAN(st,sa); if(!m) break; st=applyMove(st,m); out.push({state:st,san:sa,move:m}); }
+  return out;
+}
+function parsePGN(pgn){
+  let s=pgn.replace(/\{[^}]*\}/g,' ').replace(/;[^\n]*/g,' ').replace(/\$\d+/g,' ').replace(/\([^()]*\)/g,' ');
+  s=s.split('\n').filter(l=>!l.trim().startsWith('[')).join(' ');
+  s=s.replace(/\d+\.(\.\.)?/g,' ').replace(/(1-0|0-1|1\/2-1\/2|\*)/g,' ');
+  const tokens=s.split(/\s+/).filter(Boolean);
+  let st=parseFEN(START_FEN); const hist=[{state:st,san:'Start',move:null}];
+  for(const tk of tokens){
+    const m=parseSAN(st,tk);
+    if(!m){ hist.push({state:st,san:tk,move:null,error:true}); break; }
+    st=applyMove(st,m); hist.push({state:st,san:tk,move:m});
+  }
+  return hist;
+}
+
+/* ============================================================ DATA ============================================================ */
+const OPENINGS=[
+ {name:"Ruy López",eco:"C65",color:"White",tags:["Positional","Solid"],
+  moves:["e4","e5","Nf3","Nc6","Bb5","a6","Ba4","Nf6","O-O","Be7"],
+  idea:"The 'Spanish Torture' — White pressures the e5-pawn via the c6-knight and builds a slow, lasting initiative on both wings.",
+  keys:["Pin/pressure the c6-knight to undermine e5","Aim for the d4 break after preparing with c3 and Re1","The bishop reroutes Bb5-a4-c2 onto the deadly b1-h7 diagonal"],
+  white:"Play c3 and d4 to build a broad pawn centre; maneuver Nb1-d2-f1-g3 (the Spanish knight tour) toward the kingside.",
+  black:"Equalise with ...d6/...O-O and the ...Na5 hitting the bishop, or strike the centre with the Marshall ...d5 gambit.",
+  trans:"Can transpose to the Italian via ...Bc5, or to closed Spanish structures resembling the King's Indian reversed."},
+ {name:"Italian Game",eco:"C50",color:"White",tags:["Beginner-Friendly","Aggressive"],
+  moves:["e4","e5","Nf3","Nc6","Bc4","Bc5"],
+  idea:"Rapid, natural development aiming the bishop at f7 — the classic teaching opening that follows every opening principle.",
+  keys:["Target the f7 weak point with Bc4 + Ng5 ideas","Choose the quiet c3+d3 (Giuoco Pianissimo) or the sharp d4 break","Castle early and fight for the centre"],
+  white:"Slow plan: c3, d3, Nbd2, and a patient kingside build-up. Fast plan: c3 then d4 for an open centre.",
+  black:"Mirror development with ...Nf6, ...d6, ...O-O; the ...Bc5 bishop eyes f2.",
+  trans:"...Nf6 leads to the Two Knights Defence; an early c3+d4 can transpose to the Scotch or Göring Gambit."},
+ {name:"Sicilian — Najdorf",eco:"B90",color:"Black",tags:["Aggressive","Positional"],
+  moves:["e4","c5","Nf3","d6","d4","cxd4","Nxd4","Nf6","Nc3","a6"],
+  idea:"The most respected reply to 1.e4. Black accepts a backward d-pawn in return for the half-open c-file and dynamic counterplay.",
+  keys:["...a6 controls b5 and prepares ...e5 or ...b5 expansion","Black plays on the queenside dark squares and the c-file","Fight for the d5 square — the soul of the Najdorf"],
+  white:"Choose the English Attack (Be3, f3, g4, O-O-O) for a kingside pawn storm, or the positional 6.Be2.",
+  black:"Expand with ...b5, fianchetto with ...Bb7/...e5, and create play against White's centre and king.",
+  trans:"Can transpose to the Scheveningen with ...e6, or to the English Attack structures of many Open Sicilians."},
+ {name:"French Defence",eco:"C00",color:"Black",tags:["Solid","Positional"],
+  moves:["e4","e6","d4","d5","Nc3","Nf6"],
+  idea:"A rock-solid pawn chain. Black concedes space but gets a resilient structure and clear pawn-break plans.",
+  keys:["The ...c5 break challenges White's d4 base","The light-squared bishop is the 'French problem child' — free it","Counterattack the base of White's chain"],
+  white:"Gain space with e5, then attack on the kingside; or trade with exd5 for an open game.",
+  black:"Strike with ...c5 and ...f6 against the e5/d4 chain; reroute the bad bishop via ...b6/...Ba6.",
+  trans:"...dxe4 enters the Rubinstein; an early ...c5 with exchanges can reach Caro-Kann-like or IQP structures."},
+ {name:"Caro-Kann Defence",eco:"B15",color:"Black",tags:["Solid","Beginner-Friendly"],
+  moves:["e4","c6","d4","d5","Nc3","dxe4","Nxe4"],
+  idea:"Like the French but the c8-bishop gets out first. Famous for a sound structure and excellent endgames.",
+  keys:["Develop the light bishop to f5 or g4 before ...e6","Accept slightly less space for zero weaknesses","Aim for the ...c5 or ...e5 freeing break"],
+  white:"Seize space, castle, and probe with h4-h5 against a ...Bf5 setup.",
+  black:"Complete development harmoniously, then equalise with a timely ...c5 and trade into a clean endgame.",
+  trans:"The Advance (3.e5) gives French-style chains; ...Nd7 lines transpose between Classical and Karpov systems."},
+ {name:"King's Indian Defence",eco:"E60",color:"Black",tags:["Aggressive","Positional"],
+  moves:["d4","Nf6","c4","g6","Nc3","Bg7","e4","d6"],
+  idea:"Black cedes the centre, then detonates it with ...e5 or ...f5, racing for a kingside mating attack.",
+  keys:["The fianchettoed Bg7 is the engine of Black's play","...e5 and ...f5 unleash a kingside pawn storm","Both sides attack on opposite wings — a race"],
+  white:"Expand on the queenside with c5 and b4, opening files against Black's king's former home.",
+  black:"Close the centre with ...e5-e4, then storm with ...f5-f4-g4-g3 toward White's king.",
+  trans:"...d5 converts to the Grünfeld spirit; ...c5 setups can transpose to Benoni structures."},
+ {name:"English Opening",eco:"A20",color:"White",tags:["Positional"],
+  moves:["c4","e5","Nc3","Nf6","Nf3","Nc6"],
+  idea:"A flexible flank opening — often a 'reversed Sicilian' where White enjoys an extra tempo.",
+  keys:["Fianchetto with g3/Bg2 to pressure the long diagonal","Flexible: can become positional or transpose to 1.d4 systems","Fight for d5 and the c-file"],
+  white:"Fianchetto, castle, and expand with d3, Rb1, and a queenside minority push b4-b5.",
+  black:"Treat it as a Sicilian a tempo down — solid central control with ...d5 or ...Bb4 pins.",
+  trans:"Frequently transposes to the Queen's Gambit, Catalan, or reversed Sicilian structures."},
+ {name:"Queen's Gambit Declined",eco:"D30",color:"White",tags:["Solid","Positional"],
+  moves:["d4","d5","c4","e6","Nc3","Nf6"],
+  idea:"The classical battleground of world championships — White pressures d5 to gain a lasting space edge.",
+  keys:["The c4-pawn pressures Black's d5 centre","Aim for the minority attack b4-b5 on the queenside","The 'bad' c8-bishop is Black's long-term concern"],
+  white:"Develop with Bg5, e3, Bd3, O-O, then launch the minority attack to create a weak c6-pawn.",
+  black:"Solve the bishop problem via ...b6/...Bb7 or the freeing ...c5 / ...dxc4 breaks.",
+  trans:"...c6 enters the Semi-Slav; an early ...dxc4 reaches the Queen's Gambit Accepted."},
+ {name:"King's Gambit",eco:"C30",color:"White",tags:["Gambit","Aggressive"],
+  moves:["e4","e5","f4","exf4","Nf3","g5"],
+  idea:"A romantic-era gambit: White sacrifices a pawn for rapid development, an open f-file, and a roaring central attack.",
+  keys:["Open the f-file for the rook after castling","Build a big centre with d4 and Bxf4","Sharp, tactical play — booked-up preparation pays off"],
+  white:"Castle quickly, regain f4, and throw everything at the black king with h4 and Ne5.",
+  black:"Hold the extra pawn with ...g5 and ...Bg7, or return it for safe development and a sound structure.",
+  trans:"Declined lines (...Bc5) resemble the Italian; ...d5 (Falkbeer) flips the gambit onto White."},
+ {name:"Scandinavian Defence",eco:"B01",color:"Black",tags:["Beginner-Friendly","Aggressive"],
+  moves:["e4","d5","exd5","Qxd5","Nc3","Qa5"],
+  idea:"Black immediately challenges e4. Simple to learn, it leads to clear, structurally sound play.",
+  keys:["Trade off White's strong e4-pawn at once","Develop the queen to a5 or d6 to avoid further tempo loss","Solid Caro-Kann-like structures arise"],
+  white:"Gain time on the queen with Nc3/d4, develop fully, and use the central space edge.",
+  black:"Develop quickly with ...Nf6, ...c6, ...Bf5/...Bg4, and castle long for active play.",
+  trans:"3...Qd6 and 3...Qd8 lines reach similar structures; ...Nf6 setups can echo the Caro-Kann."}
+];
+
+const THEMES=[
+ {id:"fork",name:"Fork",level:"Beginner",
+  exp:"One piece attacks two or more enemy units at once. Knights are the deadliest forkers — they hit pieces that cannot defend each other. A fork against the king and queen (a 'royal fork') wins decisive material.",
+  fen:"r3k3/8/8/1N6/8/8/8/6K1 w - - 0 1",sol:"b5c7",
+  feedback:"Nc7+! A royal fork: the knight checks the king on e8 and simultaneously attacks the rook on a8. After the king moves, Nxa8 wins the rook."},
+ {id:"backrank",name:"Back-rank Mate",level:"Beginner",
+  exp:"A king trapped on its back rank by its own unmoved pawns is fatally exposed to a rook or queen sweeping along the eighth (or first) rank. Always make 'luft' — a flight square — for your king.",
+  fen:"6k1/5ppp/8/8/8/8/8/3R2K1 w - - 0 1",sol:"d1d8",
+  feedback:"Rd8#! Checkmate. The f7-g7-h7 pawns wall in their own king, and the rook delivers mate along the undefended back rank."},
+ {id:"pin",name:"Pin",level:"Beginner",
+  exp:"A pin freezes an enemy piece because moving it would expose a more valuable piece behind it. An 'absolute pin' against the king is the strongest — the pinned piece literally cannot move.",
+  fen:"4k3/4q3/8/8/8/8/5K2/R7 w - - 0 1",sol:"a1e1",
+  feedback:"Re1! An absolute pin of the queen to the king. The queen cannot escape down the e-file, so White wins it — at most for a rook."},
+ {id:"skewer",name:"Skewer",level:"Intermediate",
+  exp:"A skewer is a reverse pin: the more valuable piece stands in front and is forced to move, exposing the lesser piece behind it to capture. Long-range bishops, rooks and queens are the skewering tools.",
+  fen:"r7/1k6/8/8/8/8/8/3B2K1 w - - 0 1",sol:"d1f3",
+  feedback:"Bf3+! The bishop skewers the king on b7 to the rook on a8. The king must step aside and the bishop snaps off the rook."},
+ {id:"discovered",name:"Discovered Attack",level:"Intermediate",
+  exp:"When one piece moves out of the way, it unveils an attack from a piece standing behind it. If the moving piece also captures or threatens something, the opponent faces two problems at once — and a discovered check is especially brutal.",
+  fen:"8/6k1/2q5/4N3/8/8/1B6/6K1 w - - 0 1",sol:"e5c6",
+  feedback:"Nxc6+! The knight grabs the queen and uncovers a check from the b2-bishop along the long diagonal. White wins the queen with check."},
+ {id:"double",name:"Double Check",level:"Advanced",
+  exp:"Two pieces give check at the same moment — possible only via a discovery. A double check cannot be blocked or answered by a capture: the king is FORCED to move. It is the most forcing move in all of chess.",
+  fen:"4k3/3N4/8/8/B7/8/8/6K1 w - - 0 1",sol:"d7f6",
+  feedback:"Nf6+! Double check — the knight checks from f6 while the a4-bishop checks along the a4-e8 diagonal. The king must move; nothing else is legal."},
+ {id:"smother",name:"Smothered Mate",level:"Advanced",
+  exp:"A knight delivers checkmate to a king completely hemmed in by its own pieces. The classic pattern (Philidor's Legacy) often involves a queen sacrifice to force the rook into the smothering square.",
+  fen:"6rk/6pp/7N/8/8/8/8/6K1 w - - 0 1",sol:"h6f7",
+  feedback:"Nf7#! Smothered mate. The king on h8 is suffocated by its own rook on g8 and pawns on g7/h7 — the knight delivers the final blow."},
+ {id:"deflection",name:"Deflection",level:"Advanced",
+  exp:"Force an enemy piece away from a vital defensive duty. By 'deflecting' the guard — often with a sacrifice — you expose the square or piece it was protecting.",
+  fen:"2r3k1/5ppp/8/8/3Q4/8/8/3R2K1 w - - 0 1",sol:"d4d8",
+  feedback:"Qd8+! The queen deflects the c8-rook. After ...Rxd8 Rxd8# is back-rank mate — and the king has no other legal reply."},
+ {id:"greek",name:"Greek Gift Sacrifice",level:"Expert",
+  exp:"The classic Bxh7+ bishop sacrifice that rips open a castled king. After ...Kxh7, the knight leaps Ng5+ and the queen swings to h5, often forcing mate or winning back the material with a crushing attack.",
+  fen:"6k1/5ppp/8/8/8/3B1N2/5PPP/3Q2K1 w - - 0 1",sol:"d3h7",
+  feedback:"Bxh7+! The Greek Gift. After ...Kxh7, Ng5+ followed by Qh5 (or Qd1-h5) delivers a textbook mating attack on the exposed king."},
+ // Concept cards (study positions — explore + reveal, no grading)
+ {id:"zwischenzug",name:"Zwischenzug",level:"Intermediate",concept:true,
+  exp:"An 'in-between move'. Instead of making the expected recapture, you first insert a more forcing move — usually a check or a bigger threat — and only then return to the original plan, having gained material or tempo.",
+  fen:"r1bqk2r/pppp1ppp/2n2n2/4p3/1bP5/2N2N2/PP2PPPP/R1BQKB1R w KQkq - 0 1",
+  reveal:"Whenever an exchange is forced, ask: 'Is there a more forcing move first?' A zwischenzug check often wins a tempo your opponent counted on."},
+ {id:"decoy",name:"Decoy / Lure",level:"Advanced",concept:true,
+  exp:"Lure an enemy piece (often the king) onto a specific square where it can be attacked — typically with a sacrifice. The decoy and the deflection are mirror motifs: deflection drives a piece away, the decoy draws it in.",
+  fen:"5rk1/5ppp/8/8/8/8/5PPP/2Q3K1 w - - 0 1",
+  reveal:"Classic pattern: 1.Qc8! pins/decoys the f8-rook to defend, or a queen check on g8/h8 lures the king onto a knight-fork square."},
+ {id:"interference",name:"Interference",level:"Advanced",concept:true,
+  exp:"Plant a piece between an enemy defender and the square or piece it guards, cutting the line of defence — even a sacrifice on the interfering square can be worth it when the severed defender is critical.",
+  fen:"3r2k1/5ppp/8/8/8/8/5PPP/3RB1K1 w - - 0 1",
+  reveal:"Interference (Novotny/Plachutta) breaks the connection between two defenders. Look for a square where one piece blocks two enemy lines at once."},
+ {id:"xray",name:"X-Ray Attack",level:"Advanced",concept:true,
+  exp:"A long-range piece exerts influence 'through' another piece. Defensively, your rook can defend a unit through an enemy piece; offensively, you attack a target as soon as the screening piece moves.",
+  fen:"3r2k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1",
+  reveal:"Doubled rooks x-ray each other's support. If your opponent captures, your piece behind recaptures with x-ray protection — count the line all the way through."},
+ {id:"zugzwang",name:"Zugzwang",level:"Expert",concept:true,
+  exp:"A position where any move worsens your stance — but you are obliged to move. Most common in endgames: the 'trébuchet' and opposition battles are decided purely by who must move.",
+  fen:"8/8/3k4/3p4/3P4/3K4/8/8 w - - 0 1",
+  reveal:"This is the trébuchet — whoever is to move loses! White to move must abandon the d4-pawn or step back, and Black wins it. Master the opposition to put your opponent in zugzwang."},
+ {id:"clearance",name:"Clearance Sacrifice",level:"Expert",concept:true,
+  exp:"Sacrifice a piece purely to vacate a square or open a line for another piece, with enough tempo that the opponent cannot exploit the lost material before your follow-up lands.",
+  fen:"r4rk1/ppp2ppp/8/3q4/8/2N5/PPP2PPP/R2Q1RK1 w - - 0 1",
+  reveal:"Ask: 'Which of my own pieces is in the way of a winning blow?' Sacrificing it WITH TEMPO (check or threat) clears the path for the decisive piece."}
+];
+
+const ENDGAMES=[
+ {name:"The Opposition",cat:"Fundamentals",fen:"8/8/8/4k3/8/4K3/4P3/8 w - - 0 1",
+  exp:"When the two kings face each other with one square between them and it is the OPPONENT'S move, you 'have the opposition' — they must give way. Opposition is the master key to all king-and-pawn endgames.",
+  tech:"To win, the king must get in FRONT of its pawn and seize the opposition. Push the pawn only when it cannot be stopped — the king leads, the pawn follows."},
+ {name:"King & Pawn: Key Squares",cat:"Fundamentals",fen:"8/8/8/3k4/8/3K4/3P4/8 w - - 0 1",
+  exp:"For a pawn on the 2nd–5th rank, the three squares two ranks ahead of it are the 'key squares'. If your king reaches any key square, the pawn promotes by force regardless of who moves.",
+  tech:"Maneuver the king onto a key square before advancing the pawn. With a rook's pawn, no key squares exist — it is a draw if the defending king reaches the corner."},
+ {name:"Lucena Position",cat:"Rook Endings",fen:"1K1k4/1P6/8/8/8/8/6R1/r7 w - - 0 1",
+  exp:"The single most important winning rook endgame. The stronger side has a pawn on the 7th rank and the enemy king cut off — the technique to promote is 'building a bridge'.",
+  tech:"Build a bridge: place the rook on the 4th rank (Rg4!), bring the king out (Kc7, blocking checks), and use the rook to shield the king from checks as it escorts the pawn to queen."},
+ {name:"Philidor Position",cat:"Rook Endings",fen:"5k2/8/r3K3/4P3/8/8/8/7R b - - 0 1",
+  exp:"The essential DRAWING method in rook endings when the defender's king is in front of the pawn. Named after Philidor (1777), it neutralises the stronger side completely.",
+  tech:"Keep your rook on the 3rd rank (from your side) to deny the enemy king entry. The moment the pawn advances to that rank, swing the rook BEHIND the pawn and check the king endlessly from behind."},
+ {name:"King & Queen vs King",cat:"Basic Mates",fen:"8/8/8/3k4/8/8/3Q4/3K4 w - - 0 1",
+  exp:"The most common basic checkmate. The queen drives the enemy king to the edge of the board, the king marches up to support, and mate is delivered on the rim.",
+  tech:"Use the queen a knight's-move away from the enemy king to herd it to the edge — never stalemate! Then bring your own king up and finish. Caution: keep a flight square until your king arrives."},
+ {name:"Bishop vs Knight",cat:"Minor Pieces",fen:"8/5k2/4p3/3pP3/3P4/5N2/5K2/2b5 w - - 0 1",
+  exp:"Which minor piece is better depends on the structure. The bishop thrives in open positions and on both wings; the knight excels in closed positions and with fixed pawn targets it can hop to.",
+  tech:"With a bishop: open the position and create play on both flanks (the bishop's long reach dominates). With a knight: keep pawns fixed, find outpost squares, and target weaknesses the bishop cannot."}
+];
+
+const ENDGAME_TESTS=[
+ {name:"Deliver mate with the queen",fen:"7k/Q7/5K2/8/8/8/8/8 w - - 0 1",sol:"a7g7",
+  feedback:"Qg7#! The king on f6 supports the queen, which mates the cornered king. Always bring your king up to support the final blow."},
+ {name:"Rook mate on the back rank",fen:"6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1",sol:"a1a8",
+  feedback:"Ra8#! With the black king walled in by its own pawns, the rook mates along the open back rank."}
+];
+
+const TIPS=[
+ {t:"When you see a good move, look for a better one.",a:"Emanuel Lasker"},
+ {t:"Chess is the struggle against the error.",a:"Johannes Zukertort"},
+ {t:"The blunders are all there on the board, waiting to be made.",a:"Savielly Tartakower"},
+ {t:"Tactics flow from a superior position.",a:"Bobby Fischer"},
+ {t:"Help your pieces so they can help you.",a:"Paul Morphy"},
+ {t:"A bad plan is better than none at all.",a:"Frank Marshall"},
+ {t:"In the endgame, the king is a fighting piece — use it!",a:"Aron Nimzowitsch"},
+ {t:"The pin is mightier than the sword.",a:"Fred Reinfeld"},
+ {t:"Play the opening like a book, the middlegame like a magician, the endgame like a machine.",a:"Rudolf Spielmann"},
+ {t:"Every chess master was once a beginner.",a:"Irving Chernev"}
+];
+
+/* deterministic 'day' index */
+const dayIndex=()=>{const d=new Date();return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);};
+
+/* localStorage helpers (safe on file://) */
+const store={
+  get(k,f){try{const v=localStorage.getItem('cia_'+k);return v==null?f:JSON.parse(v);}catch(e){return f;}},
+  set(k,v){try{localStorage.setItem('cia_'+k,JSON.stringify(v));}catch(e){}}
+};
+
+/* AI bridge */
+const AI_RUNTIME = typeof window!=='undefined' && window.claude && typeof window.claude.complete==='function';
+async function askClaude(prompt){
+  if(AI_RUNTIME) return await window.claude.complete(prompt);
+  const key=(window.__ANTHROPIC_KEY__||'').trim();
+  if(!key) throw new Error('NO_RUNTIME');
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:prompt}]})
+  });
+  if(!res.ok) throw new Error('API '+res.status+': '+(await res.text()).slice(0,160));
+  const data=await res.json();
+  return (data.content||[]).map(c=>c.text).join('');
+}
+
+/* ============================================================ BOARD COMPONENT ============================================================ */
+function Board({state, size=420, interactive=false, onMove, last, flagged={}, showCoords=true, editMode=false, onSquare, flipped=false}){
+  const [sel,setSel]=useState(null);
+  const legals=useMemo(()=> interactive&&!editMode ? legalMoves(state):[], [state,interactive,editMode]);
+  const targets=useMemo(()=> sel==null?[]:legals.filter(m=>m.from===sel).map(m=>m.to), [sel,legals]);
+  useEffect(()=>{setSel(null);},[state]);
+  const chkSq = useMemo(()=>{ if(!state) return -1; const c=state.turn; return inCheck(state.board,c)?kingIdx(state.board,c):-1; },[state]);
+
+  const click=(i)=>{
+    if(editMode){ onSquare&&onSquare(i); return; }
+    if(!interactive) return;
+    if(sel==null){ if(state.board[i]&&colorOf(state.board[i])===state.turn) setSel(i); return; }
+    if(i===sel){ setSel(null); return; }
+    const m=legals.find(x=>x.from===sel&&x.to===i);
+    if(m){ const chosen = m.promo ? legals.find(x=>x.from===sel&&x.to===i&&x.promo==='Q') : m; onMove&&onMove(chosen); setSel(null); }
+    else if(state.board[i]&&colorOf(state.board[i])===state.turn){ setSel(i); }
+    else setSel(null);
+  };
+  const onDrop=(e,i)=>{
+    e.preventDefault();
+    const data=e.dataTransfer.getData('text');
+    if(editMode){
+      if(data.startsWith('P:')) onSquare&&onSquare(i,data.slice(2));
+      else if(/^\d+$/.test(data)){ onSquare&&onSquare(i,null,+data); }
+    }
+  };
+  const order=[];
+  for(let i=0;i<64;i++) order.push(flipped?63-i:i);
+
+  return (
+    <div className="board-wrap">
+      <div className="board" style={{'--bsz':size+'px'}}>
+        {order.map(i=>{
+          const f=fileOf(i),r=rankOf(i);
+          const lightSq=(f+r)%2===0;
+          const p=state.board[i];
+          const cls=['sq',lightSq?'l':'d'];
+          if(sel===i) cls.push('sel');
+          if(last&&(last.from===i||last.to===i)) cls.push('last');
+          if(flagged.good===i) cls.push('good');
+          if(flagged.bad===i) cls.push('bad');
+          if(chkSq===i) cls.push('chk');
+          const lastFileRow = flipped ? r===0 : r===7;
+          const firstFileCol = flipped ? f===7 : f===0;
+          return (
+            <div key={i} className={cls.join(' ')} onClick={()=>click(i)}
+                 onDragOver={e=>{if(editMode)e.preventDefault();}} onDrop={e=>onDrop(e,i)}>
+              {targets.includes(i)&&<span className={p?'ring':'dot'}></span>}
+              {p&&<span className={'pc '+(colorOf(p)==='w'?'w':'b')}
+                       draggable={editMode}
+                       onDragStart={e=>{if(editMode)e.dataTransfer.setData('text',String(i));}}>
+                    {UNI[p.toLowerCase()]}
+                  </span>}
+              {showCoords&&lastFileRow&&<span className="co f">{FILES[f]}</span>}
+              {showCoords&&firstFileCol&&<span className="co r">{8-r}</span>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* small reusable */
+const Pill=({children,gray})=><span className={'pill'+(gray?' gray':'')}>{children}</span>;
+function Stat({n,l}){return <div className="stat"><div className="n">{n}</div><div className="l">{l}</div></div>;}
+
+/* ============================================================ 1. OPENINGS ============================================================ */
+function Openings(){
+  const [q,setQ]=useState('');
+  const [filter,setFilter]=useState('All');
+  const [idx,setIdx]=useState(0);
+  const FILT=['All','Aggressive','Solid','Positional','Gambit','Beginner-Friendly'];
+  const list=useMemo(()=>OPENINGS.filter(o=>{
+    const okF=filter==='All'||o.tags.includes(filter);
+    const okQ=!q||o.name.toLowerCase().includes(q.toLowerCase())||o.eco.toLowerCase().includes(q.toLowerCase());
+    return okF&&okQ;
+  }),[q,filter]);
+  const op = list[idx]||list[0]||OPENINGS[0];
+  const line=useMemo(()=>buildLine(op.moves),[op]);
+  const [ply,setPly]=useState(0);
+  useEffect(()=>{setPly(0);},[op]);
+
+  // Drill
+  const [drill,setDrill]=useState(false);
+  const [dState,setDState]=useState(null);
+  const [dPly,setDPly]=useState(0);
+  const [dFlag,setDFlag]=useState({});
+  const [dMsg,setDMsg]=useState(null);
+  const startDrill=()=>{setDrill(true);setDState(parseFEN(START_FEN));setDPly(0);setDFlag({});setDMsg({t:'Your move: play the opening from memory.',ok:null});};
+  const drillMove=(m)=>{
+    const exp=parseSAN(dState,op.moves[dPly]);
+    if(exp&&exp.from===m.from&&exp.to===m.to){
+      const ns=applyMove(dState,m);
+      setDState(ns);setDFlag({good:m.to});
+      const next=dPly+1;
+      if(next>=op.moves.length){ setDMsg({t:'Perfect! You played the entire line from memory. ♛',ok:true}); setDPly(next); }
+      else { setDMsg({t:'Correct — '+op.moves[dPly]+'. Keep going.',ok:true}); setDPly(next); }
+    } else {
+      setDFlag({bad:m.to});
+      setDMsg({t:'Not the main line here. The book move is '+op.moves[dPly]+'. Try again.',ok:false});
+    }
+  };
+
+  return (
+    <div className="fade">
+      <div className="topbar">
+        <div><h2 className="serif">Openings Playbook</h2><p>A curated repertoire for both colours. Step through the moves, study the plans, then drill the line from memory.</p></div>
+      </div>
+      <div className="two">
+        <div style={{width:316}}>
+          <input className="input" placeholder="Search name or ECO…" value={q} onChange={e=>{setQ(e.target.value);setIdx(0);}} style={{marginBottom:12}}/>
+          <div className="chips" style={{marginBottom:14}}>
+            {FILT.map(f=><span key={f} className={'chip'+(filter===f?' on':'')} onClick={()=>{setFilter(f);setIdx(0);}}>{f}</span>)}
+          </div>
+          <div className="list scroll">
+            {list.map((o,i)=>(
+              <div key={o.name} className={'item'+(op===o?' active':'')} onClick={()=>{setIdx(i);setDrill(false);}}>
+                <h4><span>{o.name}</span><span className="eco">{o.eco}</span></h4>
+                <div className="sub">{o.color} · {o.tags.join(' · ')}</div>
+              </div>
+            ))}
+            {list.length===0&&<div className="muted" style={{padding:12}}>No openings match.</div>}
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="row" style={{justifyContent:'space-between',marginBottom:14}}>
+            <div>
+              <div className="row" style={{gap:10}}><h3 className="serif" style={{fontSize:21}}>{op.name}</h3><span className="eco">{op.eco}</span></div>
+              <div className="row" style={{marginTop:7,gap:6}}><Pill>{op.color}</Pill>{op.tags.map(t=><span key={t} className="tag">{t}</span>)}</div>
+            </div>
+            <button className={'btn '+(drill?'':'gold')} onClick={drill?()=>setDrill(false):startDrill}>{drill?'✕ Exit Drill':'⚔ Drill this opening'}</button>
+          </div>
+
+          {!drill ? (
+            <div className="row" style={{alignItems:'flex-start',gap:24}}>
+              <div>
+                <Board state={line[ply].state} size={360} last={line[ply].move}/>
+                <div className="row" style={{justifyContent:'center',marginTop:12,gap:8}}>
+                  <button className="btn sm" disabled={ply===0} onClick={()=>setPly(0)}>⏮</button>
+                  <button className="btn sm" disabled={ply===0} onClick={()=>setPly(p=>p-1)}>‹ Prev</button>
+                  <span className="muted" style={{minWidth:70,textAlign:'center',fontSize:13}}>{ply}/{line.length-1}</span>
+                  <button className="btn sm" disabled={ply>=line.length-1} onClick={()=>setPly(p=>p+1)}>Next ›</button>
+                  <button className="btn sm" disabled={ply>=line.length-1} onClick={()=>setPly(line.length-1)}>⏭</button>
+                </div>
+                <div className="moves" style={{marginTop:12,justifyContent:'center'}}>
+                  {op.moves.map((m,i)=>(
+                    <span key={i} className={'mv'+(ply===i+1?' cur':'')} onClick={()=>setPly(i+1)}>
+                      {i%2===0?(i/2+1)+'.':''}{m}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div style={{flex:1,minWidth:240}}>
+                <p style={{fontSize:14,lineHeight:1.6,marginBottom:12}}>{op.idea}</p>
+                <div style={{marginBottom:10}}><b className="gold" style={{fontSize:12.5,letterSpacing:.5}}>KEY IDEAS</b>
+                  <ul style={{margin:'6px 0 0 18px',fontSize:13.5,lineHeight:1.6}}>{op.keys.map((k,i)=><li key={i}>{k}</li>)}</ul></div>
+                <div className="kv"><b>Plan ▸ White</b><span>{op.white}</span></div>
+                <div className="kv"><b>Plan ▸ Black</b><span>{op.black}</span></div>
+                <div className="kv"><b>Transpose</b><span>{op.trans}</span></div>
+              </div>
+            </div>
+          ):(
+            <div className="row" style={{alignItems:'flex-start',gap:24}}>
+              <Board state={dState} size={360} interactive={dPly<op.moves.length} onMove={drillMove} flagged={dFlag}/>
+              <div style={{flex:1,minWidth:240}}>
+                <h4 className="serif" style={{marginBottom:10}}>Memory Drill</h4>
+                {dMsg&&<div className={'feedback '+(dMsg.ok===null?'idle':dMsg.ok?'ok':'err')}>{dMsg.t}</div>}
+                <div className="moves" style={{marginTop:14}}>
+                  {op.moves.map((m,i)=>(
+                    <span key={i} className={'mv'+(i<dPly?' cur':'')}>{i%2===0?(i/2+1)+'.':''}{i<dPly?m:'…'}</span>
+                  ))}
+                </div>
+                <button className="btn sm" style={{marginTop:16}} onClick={startDrill}>↻ Restart drill</button>
+                <p className="muted" style={{fontSize:12.5,marginTop:14,lineHeight:1.6}}>Make the moves for {op.color==='White'?'White':'Black'}. Pawns auto-promote to a queen. Correct moves flash green; mistakes flash red.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================ 2. TACTICS ============================================================ */
+function Tactics({solved,setSolved}){
+  const [level,setLevel]=useState('All');
+  const LV=['All','Beginner','Intermediate','Advanced','Expert'];
+  const LVRANGE={Beginner:'600–1000',Intermediate:'1000–1400',Advanced:'1400–1800',Expert:'1800+'};
+  const list=useMemo(()=>THEMES.filter(t=>level==='All'||t.level===level),[level]);
+  const [tid,setTid]=useState(THEMES[0].id);
+  const theme=THEMES.find(t=>t.id===tid);
+  const [state,setState]=useState(()=>parseFEN(theme.fen));
+  const [flag,setFlag]=useState({});
+  const [msg,setMsg]=useState(null);
+  const [done,setDone]=useState(false);
+  const [reveal,setReveal]=useState(false);
+
+  useEffect(()=>{ setState(parseFEN(theme.fen)); setFlag({}); setMsg(null); setDone(false); setReveal(false); },[tid]);
+
+  const onMove=(m)=>{
+    if(theme.concept||done) return;
+    const fr=sqName(m.from),to=sqName(m.to), uci=fr+to;
+    if(uci===theme.sol){
+      setState(applyMove(state,m)); setFlag({good:m.to}); setDone(true);
+      setMsg({t:theme.feedback,ok:true});
+      setSolved(s=>({...s,[theme.id]:(s[theme.id]||0)+1}));
+    } else {
+      setFlag({bad:m.to}); setMsg({t:'Not the strongest move. Look for the '+theme.name.toLowerCase()+' — try again, or reveal the solution.',ok:false});
+    }
+  };
+  const showSol=()=>{
+    if(theme.concept){ setReveal(true); return; }
+    const fresh=parseFEN(theme.fen);
+    const m=parseSAN(fresh,'')||{from:nameToIdx(theme.sol.slice(0,2)),to:nameToIdx(theme.sol.slice(2,4)),promo:theme.sol.length>4?theme.sol[4].toUpperCase():undefined};
+    setState(applyMove(fresh,m)); setFlag({good:m.to}); setDone(true); setMsg({t:theme.feedback,ok:true});
+  };
+  const reset=()=>{ setState(parseFEN(theme.fen)); setFlag({}); setMsg(null); setDone(false); };
+  const sideToMove = state.turn==='w'?'White':'Black';
+
+  return (
+    <div className="fade">
+      <div className="topbar"><div><h2 className="serif">Tactics Trainer</h2><p>Pattern recognition is 95% of practical chess. Pick a theme, find the winning move on the board, and build your count.</p></div></div>
+      <div className="chips" style={{marginBottom:16}}>{LV.map(l=><span key={l} className={'chip'+(level===l?' on':'')} onClick={()=>setLevel(l)}>{l}{LVRANGE[l]?' · '+LVRANGE[l]:''}</span>)}</div>
+      <div className="two">
+        <div style={{width:300}}>
+          <div className="list scroll" style={{maxHeight:600}}>
+            {list.map(t=>(
+              <div key={t.id} className={'item'+(tid===t.id?' active':'')} onClick={()=>setTid(t.id)}>
+                <h4><span>{t.name}</span><span className="muted" style={{fontSize:12}}>{(solved[t.id]||0)} solved</span></h4>
+                <div className="sub">{t.level}{t.concept?' · concept':''}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="card">
+          <div className="row" style={{justifyContent:'space-between',marginBottom:12}}>
+            <h3 className="serif" style={{fontSize:21}}>{theme.name}</h3>
+            <div className="row" style={{gap:6}}><span className="tag">{theme.level}</span>{!theme.concept&&<Pill>{(solved[theme.id]||0)} solved</Pill>}</div>
+          </div>
+          <p style={{fontSize:14,lineHeight:1.65,marginBottom:16}}>{theme.exp}</p>
+          <div className="row" style={{alignItems:'flex-start',gap:24}}>
+            <Board state={state} size={360} interactive={!theme.concept&&!done} onMove={onMove} flagged={flag}/>
+            <div style={{flex:1,minWidth:230}}>
+              {!theme.concept ? (
+                <>
+                  <div className={'feedback '+(msg?(msg.ok?'ok':'err'):'idle')}>
+                    {msg?msg.t:`${sideToMove} to move. Find the best move — click a piece, then its destination.`}
+                  </div>
+                  <div className="row" style={{marginTop:14}}>
+                    {!done&&<button className="btn sm" onClick={showSol}>Reveal solution</button>}
+                    <button className="btn sm" onClick={reset}>↻ Reset</button>
+                    {done&&<button className="btn gold sm" onClick={reset}>Solve again</button>}
+                  </div>
+                </>
+              ):(
+                <>
+                  <div className="feedback idle">This is a concept lesson — explore the position freely on the board.</div>
+                  <button className="btn sm" style={{marginTop:14}} onClick={()=>setReveal(r=>!r)}>{reveal?'Hide':'Reveal'} the key idea</button>
+                  {reveal&&<div className="feedback ok" style={{marginTop:12}}>{theme.reveal}</div>}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================ 3. POSITION ANALYSER ============================================================ */
+function emptyState(){return {board:new Array(64).fill(''),turn:'w',castling:'-',ep:null};}
+function Analyser({apiKey,setApiKey}){
+  const [state,setState]=useState(()=>parseFEN(START_FEN));
+  const [pal,setPal]=useState('Q');
+  const [fen,setFen]=useState(START_FEN);
+  const [ai,setAi]=useState(''); const [loading,setLoading]=useState(false); const [err,setErr]=useState('');
+  const PAL=['K','Q','R','B','N','P','k','q','r','b','n','p'];
+
+  const onSquare=(i,piece,from)=>{
+    setState(s=>{
+      const b=s.board.slice();
+      if(from!=null){ b[i]=b[from]; b[from]=''; }
+      else if(piece){ b[i]=piece; }
+      else { b[i]= pal==='x' ? '' : pal; }
+      const ns={...s,board:b}; setFen(toFEN(ns)); return ns;
+    });
+  };
+  const loadFen=()=>{ try{ const s=parseFEN(fen); if(s.board.length===64){ setState(s); setFen(toFEN(s)); setErr(''); } }catch(e){ setErr('Invalid FEN string.'); } };
+  const sync=(s)=>{ setState(s); setFen(toFEN(s)); };
+
+  const getBest=async()=>{
+    setLoading(true); setErr(''); setAi('');
+    const colour=state.turn==='w'?'White':'Black';
+    const prompt=`You are a chess grandmaster and coach. Given this chess position (FEN): ${toFEN(state)}\nIt is ${colour} to move. What is the best move for ${colour} and why? Explain the top 3 candidate moves with concrete strategic and tactical reasoning, in clear coaching language. Use standard algebraic notation. Keep it focused and instructive.`;
+    try{ const r=await askClaude(prompt); setAi(r); }
+    catch(e){ setErr(e.message==='NO_RUNTIME'?'Add your Anthropic API key below to enable AI analysis (or run this inside a Claude Artifact where it is automatic).':'Error: '+e.message); }
+    finally{ setLoading(false); }
+  };
+
+  return (
+    <div className="fade">
+      <div className="topbar"><div><h2 className="serif">Position Analyser</h2><p>Set up any position with the palette or paste a FEN from Lichess / Chess.com, then ask your AI coach for the best move.</p></div></div>
+      <div className="two">
+        <div>
+          <Board state={state} size={420} editMode onSquare={onSquare}/>
+          <p className="muted" style={{fontSize:12.5,marginTop:10,maxWidth:440,lineHeight:1.5}}>Pick a piece from the palette and click a square to place it (drag pieces to move them). Choose ✕ to erase.</p>
+          <div className="palette" style={{maxWidth:320,marginTop:12}}>
+            {PAL.map(p=>(
+              <div key={p} className={'p '+(colorOf(p)==='w'?'w':'b')+(pal===p?' sel':'')} draggable
+                   onDragStart={e=>e.dataTransfer.setData('text','P:'+p)} onClick={()=>setPal(p)}>{UNI[p.toLowerCase()]}</div>
+            ))}
+            <div className={'p'+(pal==='x'?' sel':'')} onClick={()=>setPal('x')} style={{gridColumn:'span 6',aspectRatio:'auto',padding:'8px',fontSize:14,fontWeight:700}}>✕ Eraser</div>
+          </div>
+        </div>
+        <div className="card">
+          <div className="row" style={{justifyContent:'space-between',marginBottom:8}}><b className="gold">FEN</b>
+            <div className="row" style={{gap:6}}>
+              <button className="btn sm" onClick={()=>sync(parseFEN(START_FEN))}>Start pos</button>
+              <button className="btn sm" onClick={()=>sync(emptyState())}>Clear</button>
+              <select className="input" style={{width:'auto',padding:'7px 10px'}} value={state.turn}
+                onChange={e=>sync({...state,turn:e.target.value})}><option value="w">White to move</option><option value="b">Black to move</option></select>
+            </div>
+          </div>
+          <textarea className="input" rows={2} value={fen} onChange={e=>setFen(e.target.value)} style={{fontFamily:'ui-monospace,Menlo,monospace',fontSize:12.5}}/>
+          <div className="row" style={{margintop:8,marginTop:10}}>
+            <button className="btn sm" onClick={loadFen}>Import FEN</button>
+            <button className="btn sm" onClick={()=>{navigator.clipboard&&navigator.clipboard.writeText(toFEN(state));}}>Copy FEN</button>
+          </div>
+          <div className="sep"></div>
+          <button className="btn gold" style={{width:'100%'}} disabled={loading} onClick={getBest}>{loading?'Analysing…':'✦ Get Best Move (AI)'}</button>
+          {err&&<div className="feedback err" style={{marginTop:12}}>{err}</div>}
+          {!AI_RUNTIME&&(
+            <div style={{marginTop:12}}>
+              <b className="gold" style={{fontSize:12}}>Anthropic API key (browser-only, not stored on a server)</b>
+              <input className="input" type="password" placeholder="sk-ant-…" value={apiKey} style={{marginTop:6,fontSize:12.5}}
+                onChange={e=>{setApiKey(e.target.value);window.__ANTHROPIC_KEY__=e.target.value;}}/>
+            </div>
+          )}
+          {ai&&<div className="aibox scroll" style={{marginTop:14}}>{ai}</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================ 4. ENDGAME SCHOOL ============================================================ */
+function Endgames(){
+  const [i,setI]=useState(0);
+  const lesson=ENDGAMES[i];
+  const [state,setState]=useState(()=>parseFEN(lesson.fen));
+  const [last,setLast]=useState(null);
+  useEffect(()=>{ setState(parseFEN(lesson.fen)); setLast(null); },[i]);
+  const explore=(m)=>{ setState(applyMove(state,m)); setLast(m); };
+
+  // Test me
+  const [test,setTest]=useState(null);
+  const [tState,setTState]=useState(null);
+  const [tFlag,setTFlag]=useState({}); const [tMsg,setTMsg]=useState(null); const [tDone,setTDone]=useState(false);
+  const startTest=()=>{ const t=ENDGAME_TESTS[Math.floor(Math.random()*ENDGAME_TESTS.length)]; setTest(t); setTState(parseFEN(t.fen)); setTFlag({}); setTDone(false); setTMsg({t:t.name+' — find the move.',ok:null}); };
+  const testMove=(m)=>{
+    if(tDone) return;
+    const uci=sqName(m.from)+sqName(m.to);
+    if(uci===test.sol){ setTState(applyMove(tState,m)); setTFlag({good:m.to}); setTDone(true); setTMsg({t:test.feedback,ok:true}); }
+    else { setTFlag({bad:m.to}); setTMsg({t:'Not quite — try a different technique.',ok:false}); }
+  };
+
+  return (
+    <div className="fade">
+      <div className="topbar">
+        <div><h2 className="serif">Endgame School</h2><p>Games are won and lost in the endgame. Learn the essential techniques, then test yourself against the board.</p></div>
+        <button className={'btn '+(test?'':'gold')} onClick={test?()=>setTest(null):startTest}>{test?'✕ Exit Test':'✎ Test me'}</button>
+      </div>
+
+      {test ? (
+        <div className="card" style={{maxWidth:760}}>
+          <h3 className="serif" style={{marginBottom:12}}>Test Mode</h3>
+          <div className="row" style={{alignItems:'flex-start',gap:24}}>
+            <Board state={tState} size={360} interactive={!tDone} onMove={testMove} flagged={tFlag} last={tDone?{from:nameToIdx(test.sol.slice(0,2)),to:nameToIdx(test.sol.slice(2,4))}:null}/>
+            <div style={{flex:1,minWidth:220}}>
+              {tMsg&&<div className={'feedback '+(tMsg.ok===null?'idle':tMsg.ok?'ok':'err')}>{tMsg.t}</div>}
+              <div className="row" style={{marginTop:14}}>
+                <button className="btn gold sm" onClick={startTest}>Next test ›</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ):(
+        <div className="two">
+          <div style={{width:280}}>
+            <div className="list scroll">
+              {ENDGAMES.map((e,j)=>(
+                <div key={e.name} className={'item'+(i===j?' active':'')} onClick={()=>setI(j)}>
+                  <h4>{e.name}</h4><div className="sub">{e.cat}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="card">
+            <div className="row" style={{justifyContent:'space-between',marginBottom:12}}>
+              <h3 className="serif" style={{fontSize:21}}>{lesson.name}</h3><span className="tag">{lesson.cat}</span>
+            </div>
+            <p style={{fontSize:14,lineHeight:1.65,marginBottom:14}}>{lesson.exp}</p>
+            <div className="row" style={{alignItems:'flex-start',gap:24}}>
+              <div>
+                <Board state={state} size={340} interactive onMove={explore} last={last}/>
+                <button className="btn sm" style={{marginTop:10}} onClick={()=>{setState(parseFEN(lesson.fen));setLast(null);}}>↻ Reset position</button>
+              </div>
+              <div style={{flex:1,minWidth:220}}>
+                <div className="kv"><b>Technique</b><span>{lesson.tech}</span></div>
+                <p className="muted" style={{fontSize:12.5,marginTop:14,lineHeight:1.6}}>The board is fully interactive — drag the pieces through legal moves to explore the winning (or drawing) method.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================ 5. GAME JOURNAL ============================================================ */
+const SAMPLE_PGN=`[Event "Immortal Game"]
+[White "Anderssen"]
+[Black "Kieseritzky"]
+
+1.e4 e5 2.f4 exf4 3.Bc4 Qh4+ 4.Kf1 b5 5.Bxb5 Nf6 6.Nf3 Qh6
+7.d3 Nh5 8.Nh4 Qg5 9.Nf5 c6 10.g4 Nf6 11.Rg1 cxb5 12.h4 Qg6
+13.h5 Qg5 14.Qf3 Ng8 15.Bxf4 Qf6 16.Nc3 Bc5 17.Nd5 Qxb2 18.Bd6 Bxg1 19.e5 Qxa1+ 20.Ke2 Na6 21.Nxg7+ Kd8 22.Qf6+ Nxf6 23.Be7# 1-0`;
+
+function Journal({apiKey,setApiKey}){
+  const [pgn,setPgn]=useState(SAMPLE_PGN);
+  const [hist,setHist]=useState(null);
+  const [ply,setPly]=useState(0);
+  const [ai,setAi]=useState(''); const [loading,setLoading]=useState(false); const [err,setErr]=useState('');
+
+  const load=()=>{
+    try{ const h=parsePGN(pgn); setHist(h); setPly(0); setErr(h.some(x=>x.error)?'Parsed up to an unreadable token — check the notation past that point.':''); }
+    catch(e){ setErr('Could not parse PGN.'); }
+  };
+  const review=async()=>{
+    setLoading(true); setErr(''); setAi('');
+    const prompt=`You are a chess grandmaster coach. Analyse this chess game (PGN):\n${pgn}\n\nIdentify the 3 most critical moments (mistakes or missed opportunities). For each, explain what went wrong and what the correct plan or move was. Also identify which opening was played and note any opening inaccuracies. Be concrete and instructive, written as a coach speaking to a student.`;
+    try{ const r=await askClaude(prompt); setAi(r); }
+    catch(e){ setErr(e.message==='NO_RUNTIME'?'Add your Anthropic API key below to enable AI review (or run inside a Claude Artifact where it is automatic).':'Error: '+e.message); }
+    finally{ setLoading(false); }
+  };
+
+  return (
+    <div className="fade">
+      <div className="topbar"><div><h2 className="serif">Game Journal</h2><p>Paste a PGN, replay it move by move on the board, and get a grandmaster-level review of your critical moments.</p></div></div>
+      <div className="two">
+        <div className="card">
+          <b className="gold" style={{fontSize:12.5}}>PASTE PGN</b>
+          <textarea className="input" rows={9} value={pgn} onChange={e=>setPgn(e.target.value)} style={{marginTop:8,fontFamily:'ui-monospace,Menlo,monospace',fontSize:12}}/>
+          <div className="row" style={{marginTop:10}}>
+            <button className="btn gold sm" onClick={load}>▶ Load &amp; Replay</button>
+            <button className="btn sm" disabled={loading||!hist} onClick={review}>{loading?'Reviewing…':'✦ Review with AI'}</button>
+          </div>
+          {err&&<div className="feedback err" style={{marginTop:12}}>{err}</div>}
+          {!AI_RUNTIME&&(
+            <div style={{marginTop:12}}>
+              <b className="gold" style={{fontSize:12}}>Anthropic API key (browser-only)</b>
+              <input className="input" type="password" placeholder="sk-ant-…" value={apiKey} style={{marginTop:6,fontSize:12.5}}
+                onChange={e=>{setApiKey(e.target.value);window.__ANTHROPIC_KEY__=e.target.value;}}/>
+            </div>
+          )}
+          {ai&&<div className="aibox scroll" style={{marginTop:14}}>{ai}</div>}
+        </div>
+        <div className="card">
+          {hist ? (
+            <>
+              <Board state={hist[ply].state} size={360} last={hist[ply].move}/>
+              <div className="row" style={{justifyContent:'center',marginTop:12,gap:8}}>
+                <button className="btn sm" disabled={ply===0} onClick={()=>setPly(0)}>⏮</button>
+                <button className="btn sm" disabled={ply===0} onClick={()=>setPly(p=>p-1)}>‹</button>
+                <span className="muted" style={{minWidth:80,textAlign:'center',fontSize:13}}>Move {ply}/{hist.length-1}</span>
+                <button className="btn sm" disabled={ply>=hist.length-1} onClick={()=>setPly(p=>p+1)}>›</button>
+                <button className="btn sm" disabled={ply>=hist.length-1} onClick={()=>setPly(hist.length-1)}>⏭</button>
+              </div>
+              <div className="moves scroll" style={{marginTop:12,maxHeight:170,overflow:'auto'}}>
+                {hist.slice(1).map((h,i)=>(
+                  <span key={i} className={'mv'+(ply===i+1?' cur':'')+(h.error?' err':'')} onClick={()=>setPly(i+1)}>
+                    {i%2===0?(i/2+1)+'.':''}{h.san}
+                  </span>
+                ))}
+              </div>
+            </>
+          ):(
+            <div style={{textAlign:'center',padding:'60px 20px'}}>
+              <div style={{fontSize:46,color:'var(--gold)'}}>♟</div>
+              <p className="muted" style={{marginTop:12}}>Load a PGN to replay the game here.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================ 6. DASHBOARD / HOME ============================================================ */
+function Dashboard({nav,solved,setSolved,profile,setProfile}){
+  const di=dayIndex();
+  const tip=TIPS[di%TIPS.length];
+  const graded=THEMES.filter(t=>!t.concept);
+  const puzzle=graded[di%graded.length];
+  const [pState,setPState]=useState(()=>parseFEN(puzzle.fen));
+  const [pFlag,setPFlag]=useState({}); const [pMsg,setPMsg]=useState(null); const [pDone,setPDone]=useState(false);
+  useEffect(()=>{ setPState(parseFEN(puzzle.fen)); setPFlag({}); setPMsg(null); setPDone(false); },[puzzle.id]);
+  const pMove=(m)=>{
+    if(pDone) return;
+    const uci=sqName(m.from)+sqName(m.to);
+    if(uci===puzzle.sol){
+      setPState(applyMove(pState,m)); setPFlag({good:m.to}); setPDone(true);
+      setPMsg({t:'Solved! '+puzzle.feedback,ok:true});
+      setSolved(s=>({...s,[puzzle.id]:(s[puzzle.id]||0)+1}));
+      const today=new Date().toISOString().slice(0,10);
+      setProfile(p=>{
+        if(p.lastDone===today) return p;
+        const y=new Date(Date.now()-864e5).toISOString().slice(0,10);
+        return {...p,lastDone:today,streak:(p.lastDone===y?p.streak:0)+1};
+      });
+    } else { setPFlag({bad:m.to}); setPMsg({t:'Keep looking — the theme is '+puzzle.name+'.',ok:false}); }
+  };
+
+  // Opening quiz: name the position after the full mini-line
+  const quizOp=OPENINGS[(di*7)%OPENINGS.length];
+  const quizLine=useMemo(()=>buildLine(quizOp.moves),[quizOp]);
+  const opts=useMemo(()=>{
+    const others=OPENINGS.filter(o=>o!==quizOp).sort(()=>((di%2)?1:-1));
+    const set=[quizOp,others[0],others[1],others[2]].map(o=>o.name).sort((a,b)=>a.localeCompare(b));
+    return set;
+  },[quizOp]);
+  const [quizPick,setQuizPick]=useState(null);
+
+  const total=Object.values(solved).reduce((a,b)=>a+b,0);
+  const totalSolved=THEMES.filter(t=>!t.concept).reduce((a,t)=>a+(solved[t.id]||0),0)+total*0;
+  const eloHist=profile.elo||[];
+
+  return (
+    <div className="fade">
+      <div className="topbar"><div><h2 className="serif">Welcome back, champion ♛</h2><p>Your daily training ground. Solve the puzzle, name the opening, and keep the streak alive.</p></div></div>
+
+      <div className="grid" style={{gridTemplateColumns:'repeat(4,1fr)',marginBottom:18}}>
+        <Stat n={profile.streak||0} l="Day Streak"/>
+        <Stat n={totalSolved} l="Puzzles Solved"/>
+        <Stat n={eloHist.length?eloHist[eloHist.length-1]:'—'} l="Current ELO"/>
+        <Stat n={eloHist.length?(eloHist[eloHist.length-1]-eloHist[0]>=0?'+':'')+(eloHist[eloHist.length-1]-eloHist[0]):'—'} l="ELO Gain"/>
+      </div>
+
+      <div className="grid" style={{gridTemplateColumns:'1.2fr 1fr'}}>
+        <div className="card">
+          <div className="row" style={{justifyContent:'space-between',marginBottom:12}}><h3 className="serif">Daily Tactics Puzzle</h3><span className="tag">{puzzle.name} · {puzzle.level}</span></div>
+          <div className="row" style={{alignItems:'flex-start',gap:20}}>
+            <Board state={pState} size={300} interactive={!pDone} onMove={pMove} flagged={pFlag}/>
+            <div style={{flex:1,minWidth:180}}>
+              <div className={'feedback '+(pMsg?(pMsg.ok?'ok':'err'):'idle')}>{pMsg?pMsg.t:`${pState.turn==='w'?'White':'Black'} to move. Find the winning idea.`}</div>
+              <button className="btn sm" style={{marginTop:12}} onClick={()=>nav('tactics')}>Open Tactics Trainer ›</button>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid" style={{gridTemplateColumns:'1fr'}}>
+          <div className="card">
+            <h3 className="serif" style={{marginBottom:10}}>Name This Opening</h3>
+            <p className="muted" style={{fontSize:12.5,marginBottom:10}}>Position after {quizOp.moves.length} half-moves:</p>
+            <div className="row" style={{alignItems:'flex-start',gap:18}}>
+              <Board state={quizLine[quizLine.length-1].state} size={190} showCoords={false}/>
+              <div style={{flex:1,minWidth:150}}>
+                {opts.map(o=>{
+                  const isPick=quizPick===o, correct=o===quizOp.name;
+                  const cls = quizPick? (correct?'btn gold sm':(isPick?'btn sm':'btn ghost sm')) : 'btn sm';
+                  return <button key={o} className={cls} style={{width:'100%',marginBottom:7,justifyContent:'flex-start',opacity:quizPick&&!correct&&!isPick?.5:1}}
+                    onClick={()=>!quizPick&&setQuizPick(o)}>{quizPick&&correct?'✓ ':''}{o}</button>;
+                })}
+                {quizPick&&<div className={'feedback '+(quizPick===quizOp.name?'ok':'err')} style={{marginTop:6,fontSize:12.5}}>
+                  {quizPick===quizOp.name?'Correct! ':'It was the '+quizOp.name+'. '}<span className="muted">{quizOp.eco}</span>
+                </div>}
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <h3 className="serif" style={{marginBottom:10}}>ELO Tracker</h3>
+            <EloTracker profile={profile} setProfile={setProfile}/>
+          </div>
+        </div>
+      </div>
+
+      <div className="card" style={{marginTop:18,background:'linear-gradient(120deg,rgba(212,175,55,.10),var(--panel2))'}}>
+        <div className="row" style={{gap:16}}>
+          <div style={{fontSize:40,color:'var(--gold)'}}>“</div>
+          <div><p className="quote serif">{tip.t}</p><p className="gold" style={{marginTop:6,fontWeight:700,fontSize:13}}>— {tip.a}</p></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+function EloTracker({profile,setProfile}){
+  const [val,setVal]=useState('');
+  const hist=profile.elo||[];
+  const add=()=>{ const n=parseInt(val); if(!n) return; setProfile(p=>({...p,elo:[...(p.elo||[]),n]})); setVal(''); };
+  const max=Math.max(1200,...hist), min=Math.min(800,...hist), range=Math.max(1,max-min);
+  return (
+    <>
+      <div className="row"><input className="input" type="number" placeholder="Enter today's rating" value={val} onChange={e=>setVal(e.target.value)} style={{flex:1}}/><button className="btn gold sm" onClick={add}>Log</button></div>
+      {hist.length>0 ? (
+        <div style={{display:'flex',alignItems:'flex-end',gap:6,height:90,marginTop:14}}>
+          {hist.slice(-12).map((v,i)=>(
+            <div key={i} title={v} style={{flex:1,background:'linear-gradient(180deg,var(--gold2),var(--gold))',borderRadius:'4px 4px 0 0',height:(14+((v-min)/range)*72)+'px',position:'relative'}}>
+              <span style={{position:'absolute',top:-16,left:'50%',transform:'translateX(-50%)',fontSize:9.5,color:'var(--muted)'}}>{v}</span>
+            </div>
+          ))}
+        </div>
+      ):<p className="muted" style={{fontSize:12.5,marginTop:12}}>Log your rating after a session to track your climb.</p>}
+    </>
+  );
+}
+
+/* ============================================================ APP ROOT ============================================================ */
+const NAV=[
+  {id:'home',ic:'♛',label:'Daily Challenge'},
+  {id:'openings',ic:'♞',label:'Openings Playbook'},
+  {id:'tactics',ic:'⚡',label:'Tactics Trainer'},
+  {id:'analyser',ic:'⊹',label:'Position Analyser'},
+  {id:'endgame',ic:'♚',label:'Endgame School'},
+  {id:'journal',ic:'✎',label:'Game Journal'},
+];
+function App(){
+  const [tab,setTab]=useState('home');
+  const [solved,setSolved]=useState(()=>store.get('solved',{}));
+  const [profile,setProfile]=useState(()=>store.get('profile',{streak:0,lastDone:null,elo:[]}));
+  const [apiKey,setApiKey]=useState('');
+  useEffect(()=>store.set('solved',solved),[solved]);
+  useEffect(()=>store.set('profile',profile),[profile]);
+  useEffect(()=>{ window.__ANTHROPIC_KEY__=apiKey; },[apiKey]);
+
+  return (
+    <div className="shell">
+      <aside className="sidebar">
+        <div className="brand">
+          <span className="crown">♚</span>
+          <div><h1 className="serif">Chess Academy</h1><small>Grandmaster Training</small></div>
+        </div>
+        {NAV.map(n=>(
+          <button key={n.id} className={'navbtn'+(tab===n.id?' active':'')} onClick={()=>setTab(n.id)}>
+            <span className="ic">{n.ic}</span>{n.label}
+          </button>
+        ))}
+        <div className="side-foot">{AI_RUNTIME?'✦ AI coach connected':'AI features ready — add an API key in Analyser / Journal.'}</div>
+      </aside>
+      <main className="main" key={tab}>
+        {tab==='home'&&<Dashboard nav={setTab} solved={solved} setSolved={setSolved} profile={profile} setProfile={setProfile}/>}
+        {tab==='openings'&&<Openings/>}
+        {tab==='tactics'&&<Tactics solved={solved} setSolved={setSolved}/>}
+        {tab==='analyser'&&<Analyser apiKey={apiKey} setApiKey={setApiKey}/>}
+        {tab==='endgame'&&<Endgames/>}
+        {tab==='journal'&&<Journal apiKey={apiKey} setApiKey={setApiKey}/>}
+      </main>
+    </div>
+  );
+}
+window.__engine={parseFEN,toFEN,legalMoves,applyMove,parseSAN,buildLine,parsePGN,nameToIdx,sqName,OPENINGS,THEMES,ENDGAMES,ENDGAME_TESTS,SAMPLE_PGN};
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
