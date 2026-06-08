@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>John Doe — Contact</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #38bdf8;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --hover: rgba(56, 189, 248, 0.12);
+      --row: rgba(255, 255, 255, 0.04);
+    }
+    body.light {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --accent: #0284c7;
+      --text: #1e293b;
+      --muted: #64748b;
+      --hover: rgba(2, 132, 199, 0.1);
+      --row: rgba(0, 0, 0, 0.04);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      transition: background 0.3s, color 0.3s;
+    }
+    .theme-toggle {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 50%;
+      background: var(--card);
+      color: var(--text);
+      font-size: 1.25rem;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      transition: background 0.3s, transform 0.2s;
+    }
+    .theme-toggle:hover { transform: scale(1.1); }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 2.5rem;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    .avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #818cf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 auto 1.25rem;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.6rem;
+      margin-bottom: 0.25rem;
+    }
+    .role {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 1.75rem;
+      font-size: 0.95rem;
+    }
+    .contact {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .contact li a {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 0.85rem 1rem;
+      background: var(--row);
+      border-radius: 10px;
+      color: var(--text);
+      text-decoration: none;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .contact li a:hover {
+      background: var(--hover);
+      transform: translateY(-2px);
+    }
+    .contact .icon { font-size: 1.2rem; width: 1.5rem; text-align: center; }
+    .contact .label { font-size: 0.75rem; color: var(--muted); display: block; }
+    .contact .value { font-size: 0.95rem; }
+    footer {
+      text-align: center;
+      margin-top: 1.75rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle light/dark mode">🌙</button>
+
+  <main class="card">
+    <div class="avatar">JD</div>
+    <h1>John Doe</h1>
+    <p class="role">Software Developer</p>
+
+    <ul class="contact">
+      <li>
+        <a href="mailto:john.doe@example.com">
+          <span class="icon">✉️</span>
+          <span><span class="label">Email</span><span class="value">john.doe@example.com</span></span>
+        </a>
+      </li>
+      <li>
+        <a href="tel:+1234567890">
+          <span class="icon">📞</span>
+          <span><span class="label">Phone</span><span class="value">+1 (234) 567-890</span></span>
+        </a>
+      </li>
+      <li>
+        <a href="https://www.linkedin.com/in/johndoe" target="_blank" rel="noopener">
+          <span class="icon">💼</span>
+          <span><span class="label">LinkedIn</span><span class="value">linkedin.com/in/johndoe</span></span>
+        </a>
+      </li>
+      <li>
+        <a href="https://maps.google.com" target="_blank" rel="noopener">
+          <span class="icon">📍</span>
+          <span><span class="label">Location</span><span class="value">City, Country</span></span>
+        </a>
+      </li>
+    </ul>
+
+    <footer>© 2026 John Doe</footer>
+  </main>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    const body = document.body;
+
+    // Safe localStorage helpers (some browsers block storage on file:// pages)
+    function loadTheme() {
+      try { return localStorage.getItem('theme'); } catch (e) { return null; }
+    }
+    function saveTheme(value) {
+      try { localStorage.setItem('theme', value); } catch (e) { /* ignore */ }
+    }
+
+    // Restore saved preference
+    if (loadTheme() === 'light') {
+      body.classList.add('light');
+      toggle.textContent = '☀️';
+    }
+
+    toggle.addEventListener('click', () => {
+      const isLight = body.classList.toggle('light');
+      toggle.textContent = isLight ? '☀️' : '🌙';
+      saveTheme(isLight ? 'light' : 'dark');
+    });
+  </script>
+</body>
+</html>
